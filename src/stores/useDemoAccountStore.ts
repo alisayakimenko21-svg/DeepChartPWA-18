@@ -106,7 +106,7 @@ export const useDemoAccountStore = create<DemoAccountState>()(
           direction: signal.direction,
           openedAt: Date.now(),
           entryPrice: signal.entryPrice,
-          expiryAt: (signal.time + TIMEFRAME_SECONDS[signal.timeframe] * 2) * 1000,
+          expiryAt: (signal.time + TIMEFRAME_SECONDS[signal.timeframe]) * 1000,
           symbolId: signal.symbolId,
           timeframe: signal.timeframe,
           candleTime: signal.time,
@@ -180,13 +180,12 @@ export const useDemoAccountStore = create<DemoAccountState>()(
         const newEntries: DemoTradeHistoryEntry[] = [];
 
         for (const trade of orphans) {
-          const nextCandleTime = trade.candleTime + TIMEFRAME_SECONDS[timeframe];
-          const candle = candles.find((c) => c.time === nextCandleTime);
-          if (!candle) continue;
-          if (candle.time === lastCandleTime) continue;
+          const entryCandle = candles.find((c) => c.time === trade.candleTime);
+          if (!entryCandle) continue;
+          if (entryCandle.time === lastCandleTime) continue;
 
-          const closedAtMs = (candle.time + TIMEFRAME_SECONDS[timeframe]) * 1000;
-          const result = resolveTrade(trade, candle.close, closedAtMs, {
+          const closedAtMs = (entryCandle.time + TIMEFRAME_SECONDS[timeframe]) * 1000;
+          const result = resolveTrade(trade, entryCandle.close, closedAtMs, {
             balance: newBalance,
             consecutiveLosses: newConsecutiveLosses,
             currentStake: newCurrentStake,
@@ -223,7 +222,7 @@ export const useDemoAccountStore = create<DemoAccountState>()(
       setBaseStake: (v) => set({ baseStake: v, currentStake: v, consecutiveLosses: 0 }),
       setProfitPercent: (v) => set({ profitPercent: v }),
       setAutoTradeEnabled: (v) => set({ autoTradeEnabled: v }),
-      setBalance: (v) => set((s) => ({ balance: v, consecutiveLosses: 0, currentStake: s.baseStake })),
+      setBalance: (v) => set({ balance: v }),
       resetAccount: () => set((s) => ({
         balance: DEFAULT_BALANCE,
         baseStake: s.baseStake,

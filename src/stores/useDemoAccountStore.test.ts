@@ -45,7 +45,7 @@ describe('useDemoAccountStore — orphaned trade resolution', () => {
     expect(useDemoAccountStore.getState().balance).toBe(990);
   });
 
-  it('orphaned trade resolves using next candle close after switching away and back', () => {
+  it('orphaned trade resolves using entry candle close after switching away and back', () => {
     const now = Date.now();
     const tf: Timeframe = '5m';
     const tfSeconds = 300;
@@ -63,7 +63,7 @@ describe('useDemoAccountStore — orphaned trade resolution', () => {
           direction: 'buy',
           openedAt: now - tfSeconds * 3 * 1000,
           entryPrice: 100,
-          expiryAt: (candleTime + tfSeconds * 2) * 1000,
+          expiryAt: (candleTime + tfSeconds) * 1000,
           symbolId: 'A',
           timeframe: tf,
           candleTime,
@@ -108,7 +108,7 @@ describe('useDemoAccountStore — win/loss balance and martingale', () => {
           direction: 'buy',
           openedAt: candleTime * 1000,
           entryPrice: 100,
-          expiryAt: (candleTime + tfSeconds * 2) * 1000,
+          expiryAt: (candleTime + tfSeconds) * 1000,
           symbolId: 'A',
           timeframe: tf,
           candleTime,
@@ -117,7 +117,7 @@ describe('useDemoAccountStore — win/loss balance and martingale', () => {
     });
 
     // price went up → buy wins
-    useDemoAccountStore.getState().checkExpiries(105, (candleTime + tfSeconds * 2) * 1000, 'A', tf);
+    useDemoAccountStore.getState().checkExpiries(105, (candleTime + tfSeconds) * 1000, 'A', tf);
 
     const state = useDemoAccountStore.getState();
     expect(state.openTrades['sig-win']).toBeUndefined();
@@ -146,7 +146,7 @@ describe('useDemoAccountStore — win/loss balance and martingale', () => {
           direction: 'buy',
           openedAt: candleTime * 1000,
           entryPrice: 100,
-          expiryAt: (candleTime + tfSeconds * 2) * 1000,
+          expiryAt: (candleTime + tfSeconds) * 1000,
           symbolId: 'A',
           timeframe: tf,
           candleTime,
@@ -155,7 +155,7 @@ describe('useDemoAccountStore — win/loss balance and martingale', () => {
     });
 
     // price went down → buy loses
-    useDemoAccountStore.getState().checkExpiries(95, (candleTime + tfSeconds * 2) * 1000, 'A', tf);
+    useDemoAccountStore.getState().checkExpiries(95, (candleTime + tfSeconds) * 1000, 'A', tf);
 
     const state = useDemoAccountStore.getState();
     expect(state.openTrades['sig-loss']).toBeUndefined();
@@ -184,7 +184,7 @@ describe('useDemoAccountStore — win/loss balance and martingale', () => {
           direction: 'buy',
           openedAt: candleTime * 1000,
           entryPrice: 100,
-          expiryAt: (candleTime + tfSeconds * 2) * 1000,
+          expiryAt: (candleTime + tfSeconds) * 1000,
           symbolId: 'A',
           timeframe: tf,
           candleTime,
@@ -193,14 +193,14 @@ describe('useDemoAccountStore — win/loss balance and martingale', () => {
     });
 
     // price went down → buy loses, 3rd consecutive loss
-    useDemoAccountStore.getState().checkExpiries(95, (candleTime + tfSeconds * 2) * 1000, 'A', tf);
+    useDemoAccountStore.getState().checkExpiries(95, (candleTime + tfSeconds) * 1000, 'A', tf);
 
     const state = useDemoAccountStore.getState();
     expect(state.consecutiveLosses).toBe(0);
     expect(state.currentStake).toBe(10); // reset to base after 3 losses
   });
 
-  it('trade does not expire before next candle close', () => {
+  it('trade does not expire before entry candle close', () => {
     const tf: Timeframe = '5m';
     const tfSeconds = 300;
     const candleTime = 100000;
@@ -217,7 +217,7 @@ describe('useDemoAccountStore — win/loss balance and martingale', () => {
           direction: 'buy',
           openedAt: candleTime * 1000,
           entryPrice: 100,
-          expiryAt: (candleTime + tfSeconds * 2) * 1000,
+          expiryAt: (candleTime + tfSeconds) * 1000,
           symbolId: 'A',
           timeframe: tf,
           candleTime,
@@ -225,12 +225,27 @@ describe('useDemoAccountStore — win/loss balance and martingale', () => {
       },
     });
 
-    // nowMs is at the close of the entry candle — should NOT expire yet
-    useDemoAccountStore.getState().checkExpiries(105, (candleTime + tfSeconds) * 1000, 'A', tf);
+    // nowMs is before the close of the entry candle — should NOT expire yet
+    useDemoAccountStore.getState().checkExpiries(105, (candleTime + tfSeconds - 1) * 1000, 'A', tf);
 
     const state = useDemoAccountStore.getState();
     expect(state.openTrades['sig-early']).toBeDefined();
     expect(state.balance).toBe(990);
     expect(state.history).toHaveLength(0);
+  });
+
+  it('setBalance does not reset martingale state', () => {
+    useDemoAccountStore.setState({
+      balance: 990,
+      consecutiveLosses: 2,
+      currentStake: 40,
+    });
+
+    useDemoAccountStore.getState().setBalance(5000);
+
+    const state = useDemoAccountStore.getState();
+    expect(state.balance).toBe(5000);
+    expect(state.consecutiveLosses).toBe(2); // unchanged
+    expect(state.currentStake).toBe(40); // unchanged
   });
 });

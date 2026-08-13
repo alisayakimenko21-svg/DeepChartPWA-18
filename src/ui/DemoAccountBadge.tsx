@@ -55,7 +55,7 @@ export function DemoAccountBadge() {
                 <StatCard label="Процент прибыли" value={`${profitPercent}%`} />
                 <StatCard
                   label="Проигрыши подряд"
-                  value={`${consecutiveLosses}/2`}
+                  value={`${consecutiveLosses}/3`}
                   valueClass={consecutiveLosses > 0 ? 'text-warning-400' : 'text-base-100'}
                 />
                 <StatCard

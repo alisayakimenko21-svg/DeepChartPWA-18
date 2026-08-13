@@ -388,6 +388,7 @@ function handleCandle(
     maybeCompute(set, get);
     useDemoAccountStore.getState().checkExpiries(candle.close, (candle.time + TIMEFRAME_SECONDS[state.activeTimeframe]) * 1000, state.activeSymbolId, state.activeTimeframe);
     maybeEvaluateSignal(set, get, true);
+    useDemoAccountStore.getState().checkExpiries(candle.close, (candle.time + TIMEFRAME_SECONDS[state.activeTimeframe]) * 1000, state.activeSymbolId, state.activeTimeframe);
     maybeResolveOutcomes(set, get);
   } else {
     maybeEvaluateSignal(set, get, false);
@@ -497,7 +498,6 @@ function maybeTriggerPreClose(
   analytics.setCurrentSignal(preCloseSignal);
   analytics.upsertSignal(preCloseSignal);
   ensureScheduler().schedule(preCloseSignal);
-  useDemoAccountStore.getState().openTrade(preCloseSignal);
   void saveSignal(preCloseSignal);
 
   const prob = preCloseSignal.calibratedProbability ?? preCloseSignal.score / 10;
