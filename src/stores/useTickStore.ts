@@ -386,8 +386,8 @@ function handleCandle(
 
   if (isClosed) {
     maybeCompute(set, get);
+    useDemoAccountStore.getState().checkExpiries(candle.close, (candle.time + TIMEFRAME_SECONDS[state.activeTimeframe]) * 1000, state.activeSymbolId, state.activeTimeframe);
     maybeEvaluateSignal(set, get, true);
-    useDemoAccountStore.getState().checkExpiries(candle.close, (candle.time + TIMEFRAME_SECONDS[state.activeTimeframe] * 2) * 1000, state.activeSymbolId, state.activeTimeframe);
     maybeResolveOutcomes(set, get);
   } else {
     maybeEvaluateSignal(set, get, false);
